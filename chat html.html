@@ -160,6 +160,7 @@
   <script>
     let data = {};
 
+    // 1. Carga inicial de datos desde Google Sheets (Sigue igual)
     async function fetchData() {
       try {
         const response = await fetch('https://script.google.com/macros/s/AKfycbysU4e9dNsFd5gIx3nM9GCrqMUfLv56hwX9gU0cezltzvPNiupVXF3b5sjUu5G_NYE/exec');
@@ -174,6 +175,7 @@
       }
     }
 
+    // 2. Muestra los botones de acceso rápido iniciales (Sigue igual)
     function displayDefaultMessages() {
       const defaultMessages = [
         { text: 'Ayuda', action: () => sendPredefinedMessage('Ayuda') },
@@ -182,10 +184,8 @@
       ];
 
       const chatContainer = document.getElementById('chatContainer');
-      
       displayMessage('¡Hola! Soy Eli, tu Asistente Virtual. ¿En qué puedo ayudarte hoy?', 'bot');
       
-      // Creamos un contenedor específico para la sección de accesos rápidos
       const quickActionsDiv = document.createElement('div');
       quickActionsDiv.id = 'quickActionsSection';
       quickActionsDiv.classList.add('quick-actions-container');
@@ -207,67 +207,118 @@
       document.getElementById('userInput').focus();
     }
 
-    // Remueve el bloque de botones iniciales para que no ensucien la conversación histórica
     function removeQuickActions() {
       const actionsSection = document.getElementById('quickActionsSection');
-      if (actionsSection) {
-        actionsSection.remove();
+      if (actionsSection) actionsSection.remove();
+    }
+
+    // 3. NUEVA LÓGICA: Envío de mensajes predefinidos con auditoría completa
+    function sendPredefinedMessage(message) {
+      removeQuickActions(); 
+      displayMessage(message, 'user');
+      
+      const idMensaje = Date.now().toString(); 
+      enviarPreguntaGoogle(idMensaje, message, "ÉXITO");
+
+      const botMessage = findAnswer(message);
+      displayBotMessageWithFeedback(idMensaje, botMessage);
+    }
+
+    // 4. NUEVA LÓGICA: Envío de mensajes manuales con filtro matemático y auditoría
+    function sendMessage() {
+      const input = document.getElementById('userInput');
+      const userMessage = input.value.trim();
+      if (userMessage) {
+        removeQuickActions(); 
+        displayMessage(userMessage, 'user');
+        
+        const idMensaje = Date.now().toString();
+        const resultado = evaluarYBuscarRespuesta(userMessage);
+        
+        enviarPreguntaGoogle(idMensaje, userMessage, resultado.estado);
+        displayBotMessageWithFeedback(idMensaje, resultado.respuesta);
+        
+        input.value = '';
+        input.focus();
       }
     }
 
-    function sendPredefinedMessage(message) {
-  removeQuickActions(); 
-  displayMessage(message, 'user');
-  
-  // NUEVO: Avisa a Google en segundo plano para el historial
-  navigator.sendBeacon('https://script.google.com/macros/s/AKfycbysU4e9dNsFd5gIx3nM9GCrqMUfLv56hwX9gU0cezltzvPNiupVXF3b5sjUu5G_NYE/exec?q=' + encodeURIComponent(message));
+    // 5. NUEVA LÓGICA: Evalúa la calidad antes de responder (Margen de error de 7 caracteres)
+    function evaluarYBuscarRespuesta(userMessage) {
+      if (!data) return { respuesta: 'No data available', estado: "FALLO" };
+      const keys = Object.keys(data);
+      let bestMatch = '';
+      let bestScore = Infinity;
 
-  const botMessage = findAnswer(message);
-  displayMessage(botMessage, 'bot');
-}
+      keys.forEach(key => {
+        const score = levenshteinDistance(userMessage.toLowerCase(), key.toLowerCase());
+        if (score < bestScore) {
+          bestScore = score;
+          bestMatch = key;
+        }
+      });
 
-function sendMessage() {
-  const input = document.getElementById('userInput');
-  const userMessage = input.value.trim();
-  if (userMessage) {
-    removeQuickActions(); 
-    displayMessage(userMessage, 'user');
-    
-    // NUEVO: Avisa a Google en segundo plano para el historial
-    navigator.sendBeacon('https://script.google.com/macros/s/AKfycbysU4e9dNsFd5gIx3nM9GCrqMUfLv56hwX9gU0cezltzvPNiupVXF3b5sjUu5G_NYE/exec?q=' + encodeURIComponent(userMessage));
+      if (bestScore > 7) {
+        return {
+          respuesta: "No estoy segura de entender tu consulta. Recordá que puedo darte información sobre <strong>Campus Virtual, SIU Guaraní, Horarios o Mails de contacto</strong>. ¿Podrías reformular tu pregunta?",
+          estado: "FALLO"
+        };
+      }
 
-    const botMessage = findAnswer(userMessage);
-    displayMessage(botMessage, 'bot');
-    
-    input.value = '';
-    input.focus();
-  }
-}
-
-    function findAnswer(userMessage) {
-  if (!data) return 'No data available';
-  const keys = Object.keys(data);
-  let bestMatch = '';
-  let bestScore = Infinity;
-
-  keys.forEach(key => {
-    const score = levenshteinDistance(userMessage.toLowerCase(), key.toLowerCase());
-    if (score < bestScore) {
-      bestScore = score;
-      bestMatch = key;
+      return {
+        respuesta: data[bestMatch] || 'No tengo una respuesta para eso.',
+        estado: "ÉXITO"
+      };
     }
-  });
 
-  // CONFIGURACIÓN DEL UMBRAL: 
-  // Si la diferencia de caracteres es mayor a 7, el bot no arriesga y pide reformular.
-  // Podés bajar este número si querés que sea más estricto, o subirlo si es muy exigente.
-  if (bestScore > 7) {
-    return "No estoy segura de entender tu consulta. Recordá que puedo darte información sobre <strong>Campus Virtual, SIU Guaraní, Horarios o Mails de contacto</strong>. ¿Podrías reformular tu pregunta usando otras palabras?";
-  }
+    // 6. NUEVA LÓGICA: Renderiza la respuesta e incluye los botones de Feedback 👍/👎
+    function displayBotMessageWithFeedback(id, message) {
+      const chatContainer = document.getElementById('chatContainer');
+      const blockElement = document.createElement('div');
+      blockElement.style.marginBottom = '16px';
+      blockElement.style.alignSelf = 'flex-start';
+      blockElement.style.maxWidth = '85%';
 
-  return data[bestMatch] || 'No tengo una respuesta para eso.';
-}
+      const messageElement = document.createElement('div');
+      messageElement.classList.add('message', 'bot-message');
+      messageElement.style.marginBottom = '4px';
+      messageElement.style.maxWidth = '100%';
+      messageElement.innerHTML = message;
+      blockElement.appendChild(messageElement);
 
+      const feedbackElement = document.createElement('div');
+      feedbackElement.id = 'feed-' + id;
+      feedbackElement.style.fontSize = '0.8rem';
+      feedbackElement.style.color = '#94a3b8';
+      feedbackElement.style.paddingLeft = '4px';
+      feedbackElement.innerHTML = `
+        ¿Te sirvió? 
+        <span style="cursor:pointer; margin-left:6px; filter: grayscale(1);" onclick="enviarCalificacion('${id}', 'Útil')">👍</span>
+        <span style="cursor:pointer; margin-left:6px; filter: grayscale(1);" onclick="enviarCalificacion('${id}', 'No útil')">👎</span>
+      `;
+      blockElement.appendChild(feedbackElement);
+
+      chatContainer.appendChild(blockElement);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    // 7. NUEVA LÓGICA: Envío de datos por Beacon al Apps Script (Pregunta)
+    function enviarPreguntaGoogle(id, msg, est) {
+      const url = 'https://script.google.com/macros/s/AKfycbysU4e9dNsFd5gIx3nM9GCrqMUfLv56hwX9gU0cezltzvPNiupVXF3b5sjUu5G_NYE/exec';
+      navigator.sendBeacon(`${url}?action=registrar_pregunta&id=${id}&q=${encodeURIComponent(msg)}&status=${encodeURIComponent(est)}`);
+    }
+
+    // 8. NUEVA LÓGICA: Envío de datos por Beacon al Apps Script (Votación 👍/👎)
+    function enviarCalificacion(id, voto) {
+      const feedbackDiv = document.getElementById('feed-' + id);
+      if (feedbackDiv) {
+        feedbackDiv.innerHTML = `<span style="color:#10b981; font-weight:500;">✓ Gracias por tu feedback</span>`;
+      }
+      const url = 'https://script.google.com/macros/s/AKfycbysU4e9dNsFd5gIx3nM9GCrqMUfLv56hwX9gU0cezltzvPNiupVXF3b5sjUu5G_NYE/exec';
+      navigator.sendBeacon(`${url}?action=registrar_calificacion&id=${id}&voto=${encodeURIComponent(voto)}`);
+    }
+
+    // 9. Algoritmo Matemático de Distancia (Sigue igual)
     function levenshteinDistance(a, b) {
       const matrix = [];
       for (let i = 0; i <= b.length; i++) matrix[i] = [i];
@@ -287,6 +338,7 @@ function sendMessage() {
       return matrix[b.length][a.length];
     }
 
+    // 10. Renderizador de burbujas simples (Sigue igual, usada para mensajes del usuario)
     function displayMessage(message, sender) {
       const chatContainer = document.getElementById('chatContainer');
       const messageElement = document.createElement('div');
@@ -296,12 +348,14 @@ function sendMessage() {
       chatContainer.scrollTop = chatContainer.scrollHeight;
     }
 
+    // 11. Escuchador de teclado Enter (Sigue igual)
     document.getElementById('userInput').addEventListener('keypress', function (e) {
       if (e.key === 'Enter') {
         sendMessage();
       }
     });
 
+    // Ejecución inicial
     fetchData();
   </script>
 </body>
