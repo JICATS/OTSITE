@@ -3,100 +3,130 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
- 
-
-  <title>Asistente Virtual- Eli</title>
+  <title>Asistente Virtual - Eli</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
-    .chat-popup {
-      display: none;
-      position: fixed;
-      bottom: 0;
-      right: 0;
-      width: 300px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      background: #fff;
-      z-index: 1000;
+    /* Ocupa el 100% del contenedor del iframe de la landing */
+    html, body { 
+      font-family: Arial, sans-serif; 
+      margin: 0; 
+      padding: 0; 
+      height: 100%;
+      background-color: #f1f5f9;
     }
+
+    /* Modificado: Removido el position fixed y display none para que encaje directo */
+    .chat-popup {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      height: 100%;
+      background: #fff;
+    }
+
     .chat-header {
       background: #007bff;
       color: #fff;
-      padding: 10px;
+      padding: 15px;
       font-size: 16px;
       text-align: center;
-      border-top-left-radius: 5px;
-      border-top-right-radius: 5px;
+      font-weight: bold;
     }
+
+    /* Modificado: Flex 1 para que use todo el alto disponible automáticamente */
     .chat-container {
-      max-height: 300px;
+      flex: 1;
       overflow-y: auto;
-      padding: 10px;
+      padding: 15px;
+      background-color: #f8fafc;
     }
-    .message { margin: 10px 0; }
-    .user-message { text-align: right; color: #007bff; }
-    .bot-message { text-align: left; color: #333; }
+
+    .message { 
+      margin: 12px 0; 
+      max-width: 85%;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      line-height: 1.4;
+    }
+
+    /* Burbujas de mensajes mejor definidas */
+    .user-message { 
+      text-align: left; 
+      color: #fff; 
+      background-color: #007bff;
+      margin-left: auto;
+    }
+
+    .bot-message { 
+      text-align: left; 
+      color: #333; 
+      background-color: #e2e8f0;
+      margin-right: auto;
+    }
+
     .input-container {
       display: flex;
-      border-top: 1px solid #ccc;
+      border-top: 1px solid #cbd5e1;
+      padding: 8px;
+      background: #fff;
     }
+
     input {
       flex: 1;
       padding: 10px;
-      border: none;
-      border-bottom-left-radius: 5px;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+      outline: none;
+      font-size: 0.95rem;
     }
+
     button {
-      padding: 10px;
+      padding: 10px 15px;
       border: none;
       background: #007bff;
       color: #fff;
-      border-bottom-right-radius: 5px;
+      border-radius: 4px;
       cursor: pointer;
+      margin-left: 6px;
+      font-weight: bold;
     }
+
     button:hover {
       background: #0056b3;
     }
-    .chat-toggle {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background: #007bff;
-      color: #fff;
-      padding: 10px 20px;
-      border-radius: 50px;
-      cursor: pointer;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
+
     .default-button {
-      background-color: #007bff;
-      color: white;
-      border: none;
-      padding: 10px;
-      margin: 5px 0;
+      background-color: #ffffff;
+      color: #007bff;
+      border: 1px solid #007bff;
+      padding: 8px 12px;
+      margin: 4px 0;
       cursor: pointer;
-      border-radius: 5px;
+      border-radius: 6px;
       width: 100%;
       text-align: left;
+      font-size: 0.9rem;
+      font-weight: normal;
+      transition: all 0.2s;
     }
+
     .default-button:hover {
-      background-color: #0056b3;
+      background-color: #007bff;
+      color: white;
     }
   </style>
 </head>
 <body>
+
   <div class="chat-popup" id="chatPopup">
-    <div class="chat-header">Eli-Tu Asistente Virtual</div>
+    <div class="chat-header">Eli - Tu Asistente Virtual</div>
     <div class="chat-container" id="chatContainer">
-      <!-- Mensajes del chat -->
-    </div>
+      </div>
     <div class="input-container">
       <input type="text" id="userInput" placeholder="Escribe tu pregunta...">
       <button onclick="sendMessage()">Enviar</button>
     </div>
   </div>
-  <div class="chat-toggle" onclick="toggleChat()">Chatea con Eli</div>
 
   <script>
     let data = {};
@@ -108,9 +138,9 @@
           throw new Error('Network response was not ok');
         }
         const json = await response.json();
-        console.log('Data fetched:', json); // Depura aquí
+        console.log('Data fetched:', json);
         data = json;
-        displayDefaultMessages(); // Añadir esta línea para mostrar los mensajes predeterminados
+        displayDefaultMessages();
       } catch (error) {
         console.error('Error fetching data:', error);
       }
@@ -124,23 +154,27 @@
       ];
 
       const chatContainer = document.getElementById('chatContainer');
-      // Mensaje de bienvenida
+      
       displayMessage('¡Hola! Soy Eli, tu Asistente Virtual. ¿En qué puedo ayudarte hoy?', 'bot');
-     // Texto informativo con emoji de rayo y tamaño de fuente más pequeño
-  const infoText = document.createElement('div');
-  infoText.innerHTML = '⚡ Utiliza los accesos rápidos haciendo clic en ellos o escribe tu consulta';
-  infoText.style.fontWeight = 'bold';
-  infoText.style.fontSize = '12px'; // Tamaño de fuente más pequeño
-  infoText.style.marginBottom = '10px'; // Espacio entre el texto y los botones
-  chatContainer.appendChild(infoText);
+      
+      const infoText = document.createElement('div');
+      infoText.innerHTML = '⚡ Utiliza los accesos rápidos haciendo clic en ellos o escribe tu consulta';
+      infoText.style.fontWeight = 'bold';
+      infoText.style.fontSize = '12px';
+      infoText.style.color = '#64748b';
+      infoText.style.margin = '10px 0 5px 0';
+      chatContainer.appendChild(infoText);
 
       defaultMessages.forEach(msg => {
         const button = document.createElement('button');
         button.textContent = msg.text;
         button.onclick = msg.action;
-        button.classList.add('default-button'); // Añadir una clase para estilo
+        button.classList.add('default-button');
         chatContainer.appendChild(button);
       });
+      
+      // Autoenfoque al cargar los datos
+      document.getElementById('userInput').focus();
     }
 
     function sendPredefinedMessage(message) {
@@ -204,18 +238,12 @@
       const chatContainer = document.getElementById('chatContainer');
       const messageElement = document.createElement('div');
       messageElement.classList.add('message', sender === 'user' ? 'user-message' : 'bot-message');
-      messageElement.innerHTML = message; // Usar innerHTML para interpretar el HTML
+      messageElement.innerHTML = message;
       chatContainer.appendChild(messageElement);
       chatContainer.scrollTop = chatContainer.scrollHeight;
     }
 
-    function toggleChat() {
-      const chatPopup = document.getElementById('chatPopup');
-      chatPopup.style.display = chatPopup.style.display === 'block' ? 'none' : 'block';
-      if (chatPopup.style.display === 'block') {
-        document.getElementById('userInput').focus(); // Enfocar el campo de entrada
-      }
-    }
+    // Nota: Se removió la función toggleChat ya que el chat permanece fijo y abierto.
 
     document.getElementById('userInput').addEventListener('keypress', function (e) {
       if (e.key === 'Enter') {
@@ -227,4 +255,3 @@
   </script>
 </body>
 </html>
-
