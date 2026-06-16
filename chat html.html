@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ 
+
+  <title>Asistente Virtual- Eli</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+    .chat-popup {
+      display: none;
+      position: fixed;
+      bottom: 0;
+      right: 0;
+      width: 300px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      background: #fff;
+      z-index: 1000;
+    }
+    .chat-header {
+      background: #007bff;
+      color: #fff;
+      padding: 10px;
+      font-size: 16px;
+      text-align: center;
+      border-top-left-radius: 5px;
+      border-top-right-radius: 5px;
+    }
+    .chat-container {
+      max-height: 300px;
+      overflow-y: auto;
+      padding: 10px;
+    }
+    .message { margin: 10px 0; }
+    .user-message { text-align: right; color: #007bff; }
+    .bot-message { text-align: left; color: #333; }
+    .input-container {
+      display: flex;
+      border-top: 1px solid #ccc;
+    }
+    input {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      border-bottom-left-radius: 5px;
+    }
+    button {
+      padding: 10px;
+      border: none;
+      background: #007bff;
+      color: #fff;
+      border-bottom-right-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    .chat-toggle {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: #007bff;
+      color: #fff;
+      padding: 10px 20px;
+      border-radius: 50px;
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .default-button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 10px;
+      margin: 5px 0;
+      cursor: pointer;
+      border-radius: 5px;
+      width: 100%;
+      text-align: left;
+    }
+    .default-button:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <div class="chat-popup" id="chatPopup">
+    <div class="chat-header">Eli-Tu Asistente Virtual</div>
+    <div class="chat-container" id="chatContainer">
+      <!-- Mensajes del chat -->
+    </div>
+    <div class="input-container">
+      <input type="text" id="userInput" placeholder="Escribe tu pregunta...">
+      <button onclick="sendMessage()">Enviar</button>
+    </div>
+  </div>
+  <div class="chat-toggle" onclick="toggleChat()">Chatea con Eli</div>
+
+  <script>
+    let data = {};
+
+    async function fetchData() {
+      try {
+        const response = await fetch('https://script.google.com/macros/s/AKfycbysU4e9dNsFd5gIx3nM9GCrqMUfLv56hwX9gU0cezltzvPNiupVXF3b5sjUu5G_NYE/exec');
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        const json = await response.json();
+        console.log('Data fetched:', json); // Depura aquí
+        data = json;
+        displayDefaultMessages(); // Añadir esta línea para mostrar los mensajes predeterminados
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    }
+
+    function displayDefaultMessages() {
+      const defaultMessages = [
+        { text: 'Ayuda', action: () => sendPredefinedMessage('Ayuda') },
+        { text: 'Contactos', action: () => sendPredefinedMessage('Información') },
+        { text: 'No se que preguntar', action: () => sendPredefinedMessage('No se que preguntar') }
+      ];
+
+      const chatContainer = document.getElementById('chatContainer');
+      // Mensaje de bienvenida
+      displayMessage('¡Hola! Soy Eli, tu Asistente Virtual. ¿En qué puedo ayudarte hoy?', 'bot');
+     // Texto informativo con emoji de rayo y tamaño de fuente más pequeño
+  const infoText = document.createElement('div');
+  infoText.innerHTML = '⚡ Utiliza los accesos rápidos haciendo clic en ellos o escribe tu consulta';
+  infoText.style.fontWeight = 'bold';
+  infoText.style.fontSize = '12px'; // Tamaño de fuente más pequeño
+  infoText.style.marginBottom = '10px'; // Espacio entre el texto y los botones
+  chatContainer.appendChild(infoText);
+
+      defaultMessages.forEach(msg => {
+        const button = document.createElement('button');
+        button.textContent = msg.text;
+        button.onclick = msg.action;
+        button.classList.add('default-button'); // Añadir una clase para estilo
+        chatContainer.appendChild(button);
+      });
+    }
+
+    function sendPredefinedMessage(message) {
+      displayMessage(message, 'user');
+      const botMessage = findAnswer(message);
+      displayMessage(botMessage, 'bot');
+    }
+
+    function sendMessage() {
+      const input = document.getElementById('userInput');
+      const userMessage = input.value.trim();
+      if (userMessage) {
+        displayMessage(userMessage, 'user');
+        const botMessage = findAnswer(userMessage);
+        displayMessage(botMessage, 'bot');
+        input.value = '';
+      }
+    }
+
+    function findAnswer(userMessage) {
+      if (!data) {
+        return 'No data available';
+      }
+      const keys = Object.keys(data);
+      let bestMatch = '';
+      let bestScore = Infinity;
+      keys.forEach(key => {
+        const score = levenshteinDistance(userMessage.toLowerCase(), key.toLowerCase());
+        if (score < bestScore) {
+          bestScore = score;
+          bestMatch = key;
+        }
+      });
+      return data[bestMatch] || 'No tengo una respuesta para eso.';
+    }
+
+    function levenshteinDistance(a, b) {
+      const matrix = [];
+      for (let i = 0; i <= b.length; i++) {
+        matrix[i] = [i];
+      }
+      for (let j = 0; j <= a.length; j++) {
+        matrix[0][j] = j;
+      }
+      for (let i = 1; i <= b.length; i++) {
+        for (let j = 1; j <= a.length; j++) {
+          if (b.charAt(i - 1) === a.charAt(j - 1)) {
+            matrix[i][j] = matrix[i - 1][j - 1];
+          } else {
+            matrix[i][j] = Math.min(
+              matrix[i - 1][j - 1] + 1,
+              Math.min(matrix[i][j - 1] + 1, matrix[i - 1][j] + 1)
+            );
+          }
+        }
+      }
+      return matrix[b.length][a.length];
+    }
+
+    function displayMessage(message, sender) {
+      const chatContainer = document.getElementById('chatContainer');
+      const messageElement = document.createElement('div');
+      messageElement.classList.add('message', sender === 'user' ? 'user-message' : 'bot-message');
+      messageElement.innerHTML = message; // Usar innerHTML para interpretar el HTML
+      chatContainer.appendChild(messageElement);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    function toggleChat() {
+      const chatPopup = document.getElementById('chatPopup');
+      chatPopup.style.display = chatPopup.style.display === 'block' ? 'none' : 'block';
+      if (chatPopup.style.display === 'block') {
+        document.getElementById('userInput').focus(); // Enfocar el campo de entrada
+      }
+    }
+
+    document.getElementById('userInput').addEventListener('keypress', function (e) {
+      if (e.key === 'Enter') {
+        sendMessage();
+      }
+    });
+
+    fetchData();
+  </script>
+</body>
+</html>
+
