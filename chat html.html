@@ -238,19 +238,28 @@
     }
 
     function findAnswer(userMessage) {
-      if (!data) return 'No data available';
-      const keys = Object.keys(data);
-      let bestMatch = '';
-      let bestScore = Infinity;
-      keys.forEach(key => {
-        const score = levenshteinDistance(userMessage.toLowerCase(), key.toLowerCase());
-        if (score < bestScore) {
-          bestScore = score;
-          bestMatch = key;
-        }
-      });
-      return data[bestMatch] || 'No tengo una respuesta para eso.';
+  if (!data) return 'No data available';
+  const keys = Object.keys(data);
+  let bestMatch = '';
+  let bestScore = Infinity;
+
+  keys.forEach(key => {
+    const score = levenshteinDistance(userMessage.toLowerCase(), key.toLowerCase());
+    if (score < bestScore) {
+      bestScore = score;
+      bestMatch = key;
     }
+  });
+
+  // CONFIGURACIÓN DEL UMBRAL: 
+  // Si la diferencia de caracteres es mayor a 7, el bot no arriesga y pide reformular.
+  // Podés bajar este número si querés que sea más estricto, o subirlo si es muy exigente.
+  if (bestScore > 7) {
+    return "No estoy segura de entender tu consulta. Recordá que puedo darte información sobre <strong>Campus Virtual, SIU Guaraní, Horarios o Mails de contacto</strong>. ¿Podrías reformular tu pregunta usando otras palabras?";
+  }
+
+  return data[bestMatch] || 'No tengo una respuesta para eso.';
+}
 
     function levenshteinDistance(a, b) {
       const matrix = [];
