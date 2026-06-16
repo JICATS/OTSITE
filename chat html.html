@@ -216,26 +216,33 @@
     }
 
     function sendPredefinedMessage(message) {
-      removeQuickActions(); // Limpia los botones viejos
-      displayMessage(message, 'user');
-      const botMessage = findAnswer(message);
-      displayMessage(botMessage, 'bot');
-    }
+  removeQuickActions(); 
+  displayMessage(message, 'user');
+  
+  // NUEVO: Avisa a Google en segundo plano para el historial
+  navigator.sendBeacon('https://script.google.com/macros/s/AKfycbysU4e9dNsFd5gIx3nM9GCrqMUfLv56hwX9gU0cezltzvPNiupVXF3b5sjUu5G_NYE/exec?q=' + encodeURIComponent(message));
 
-    function sendMessage() {
-      const input = document.getElementById('userInput');
-      const userMessage = input.value.trim();
-      if (userMessage) {
-        removeQuickActions(); // Limpia los botones si el usuario prefiere escribir directo
-        displayMessage(userMessage, 'user');
-        const botMessage = findAnswer(userMessage);
-        displayMessage(botMessage, 'bot');
-        
-        // CORRECCIÓN: Borra de forma efectiva la pregunta del input y hace foco para la siguiente
-        input.value = '';
-        input.focus();
-      }
-    }
+  const botMessage = findAnswer(message);
+  displayMessage(botMessage, 'bot');
+}
+
+function sendMessage() {
+  const input = document.getElementById('userInput');
+  const userMessage = input.value.trim();
+  if (userMessage) {
+    removeQuickActions(); 
+    displayMessage(userMessage, 'user');
+    
+    // NUEVO: Avisa a Google en segundo plano para el historial
+    navigator.sendBeacon('https://script.google.com/macros/s/AKfycbysU4e9dNsFd5gIx3nM9GCrqMUfLv56hwX9gU0cezltzvPNiupVXF3b5sjUu5G_NYE/exec?q=' + encodeURIComponent(userMessage));
+
+    const botMessage = findAnswer(userMessage);
+    displayMessage(botMessage, 'bot');
+    
+    input.value = '';
+    input.focus();
+  }
+}
 
     function findAnswer(userMessage) {
   if (!data) return 'No data available';
