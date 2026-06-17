@@ -224,17 +224,37 @@
       displayBotMessageWithFeedback(idMensaje, botMessage);
     }
 
-    // 4. NUEVA LÓGICA: Envío de mensajes manuales con filtro matemático y auditoría
+    // NUEVA VARIABLE GLOBAL: Actúa como la memoria de corto plazo del bot
+    let ultimaPreguntaFallida = "";
+
     function sendMessage() {
       const input = document.getElementById('userInput');
-      const userMessage = input.value.trim();
+      let userMessage = input.value.trim();
       if (userMessage) {
         removeQuickActions(); 
         displayMessage(userMessage, 'user');
         
         const idMensaje = Date.now().toString();
-        const resultado = evaluarYBuscarRespuesta(userMessage);
         
+        // Si el bot falló en la pregunta anterior y el usuario escribe una frase corta (menos de 20 letras), 
+        // asumimos que está aclarando la duda anterior y fusionamos ambas cadenas de texto.
+        let mensajeParaEvaluar = userMessage;
+        if (ultimaPreguntaFallida !== "" && userMessage.length < 20) {
+            mensajeParaEvaluar = ultimaPreguntaFallida + " " + userMessage;
+        }
+        
+        // Evaluamos usando el texto combinado si corresponde
+        const resultado = evaluarYBuscarRespuesta(mensajeParaEvaluar);
+        
+        // Si la respuesta fue un ÉXITO, limpiamos la memoria de fallos. 
+        // Si volvió a fallar, actualizamos la memoria con el nuevo intento combinado.
+        if (resultado.estado === "ÉXITO") {
+            ultimaPreguntaFallida = ""; 
+        } else {
+            ultimaPreguntaFallida = mensajeParaEvaluar; 
+        }
+        
+        // Registramos en Google lo que el usuario tipeó originalmente para no falsear el historial
         enviarPreguntaGoogle(idMensaje, userMessage, resultado.estado);
         displayBotMessageWithFeedback(idMensaje, resultado.respuesta);
         
@@ -243,15 +263,14 @@
       }
     }
 
-    // 5. NUEVA LÓGICA: Evalúa la calidad antes de responder (Margen de error de 7 caracteres)
-    function evaluarYBuscarRespuesta(userMessage) {
+    function evaluarYBuscarRespuesta(textoAEvaluar) {
       if (!data) return { respuesta: 'No data available', estado: "FALLO" };
       const keys = Object.keys(data);
       let bestMatch = '';
       let bestScore = Infinity;
 
       keys.forEach(key => {
-        const score = levenshteinDistance(userMessage.toLowerCase(), key.toLowerCase());
+        const score = levenshteinDistance(textoAEvaluar.toLowerCase(), key.toLowerCase());
         if (score < bestScore) {
           bestScore = score;
           bestMatch = key;
@@ -260,7 +279,7 @@
 
       if (bestScore > 7) {
         return {
-          respuesta: "No estoy segura de entender tu consulta. Recordá que puedo darte información sobre <strong>Campus Virtual, SIU Guaraní, Horarios o Mails de contacto</strong>. ¿Podrías reformular tu pregunta?",
+          respuesta: "No estoy segura de entender tu consulta. Recordá que puedo darte información sobre <strong>Campus Virtual, SIU Guaraní, Horarios o Mails de contacto</strong>. ¿Podrías reformular tu pregunta especificando si te referís al SIU o al Campus?",
           estado: "FALLO"
         };
       }
