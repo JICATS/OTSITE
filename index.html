@@ -34,7 +34,6 @@
             text-align: center;
         }
 
-        /* Cambiado para tomar la imagen desde la carpeta raíz de tu GitHub */
         .header-logo {
             max-width: 150px;
             height: auto;
@@ -125,6 +124,17 @@
             margin-top: 50px;
         }
 
+        /* NUEVO: Estilos dedicados a la animación del carrusel de texto */
+        @keyframes rotarPreguntas {
+            0%, 13% { top: 0px; }
+            16%, 29% { top: -20px; }
+            32%, 45% { top: -40px; }
+            48%, 61% { top: -60px; }
+            64%, 77% { top: -80px; }
+            80%, 93% { top: -100px; }
+            100% { top: 0px; }
+        }
+
         @media (max-width: 768px) {
             .container {
                 grid-template-columns: 1fr;
@@ -168,8 +178,26 @@
             </div>
         </main>
 
-        <aside class="chatbot-container">
-            <iframe src="chat html.html" class="chatbot-iframe" title="Chatbot Asistente"></iframe>
+        <aside style="display: flex; flex-direction: column; gap: 15px;">
+            
+            <div style="width: 100%; padding: 12px; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 12px; text-align: center; display: flex; justify-content: center; align-items: center; gap: 5px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+                <span style="font-size: 0.85rem; color: #64748b; font-weight: 500;">Pregúntale a Eli:</span>
+                <div style="height: 20px; overflow: hidden; position: relative; width: 240px; text-align: left;">
+                    <div class="carrusel-texto" style="position: absolute; width: 100%; animation: rotarPreguntas 15s infinite ease-in-out;">
+                        <span style="display: block; height: 20px; font-size: 0.85rem; color: #2563eb; font-weight: bold;">¿Cómo recupero mi clave del SIU?</span>
+                        <span style="display: block; height: 20px; font-size: 0.85rem; color: #16a34a; font-weight: bold;">¿Dónde saco la constancia de alumno?</span>
+                        <span style="display: block; height: 20px; font-size: 0.85rem; color: #ea580c; font-weight: bold;">¿Cómo ingreso al Campus Virtual?</span>
+                        <span style="display: block; height: 20px; font-size: 0.85rem; color: #dc2626; font-weight: bold;">Tengo un problema técnico, ¿qué hago?</span>
+                        <span style="display: block; height: 20px; font-size: 0.85rem; color: #7c3aed; font-weight: bold;">¿No te aparece una nota en el sistema?</span>
+                        <span style="display: block; height: 20px; font-size: 0.85rem; color: #2563eb; font-weight: bold;">¿Cuáles son los horarios y contactos?</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chatbot-container">
+                <iframe src="chat html.html" class="chatbot-iframe" title="Chatbot Asistente"></iframe>
+            </div>
+
         </aside>
 
     </div>
