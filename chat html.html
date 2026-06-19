@@ -264,31 +264,50 @@
     }
 
     function evaluarYBuscarRespuesta(textoAEvaluar) {
-      if (!data) return { respuesta: 'No data available', estado: "FALLO" };
-      const keys = Object.keys(data);
-      let bestMatch = '';
-      let bestScore = Infinity;
+  if (!data) return { respuesta: 'No data available', estado: "FALLO" };
+  
+  // Limpiamos el texto para la comparación rápida
+  const textoLimpio = textoAEvaluar.toLowerCase().trim();
 
-      keys.forEach(key => {
-        const score = levenshteinDistance(textoAEvaluar.toLowerCase(), key.toLowerCase());
-        if (score < bestScore) {
-          bestScore = score;
-          bestMatch = key;
-        }
-      });
-
-      if (bestScore > 7) {
-        return {
-          respuesta: "No estoy segura de entender tu consulta. Recordá que puedo darte información sobre <strong>Campus Virtual, SIU Guaraní, Horarios o Mails de contacto</strong>. ¿Podrías reformular tu pregunta especificando si te referís al SIU o al Campus?",
-          estado: "FALLO"
-        };
-      }
-
+  // Atajo directo para palabras clave críticas y cortas (Evita que Levenshtein las rebote)
+  if (textoLimpio === 'hola' || textoLimpio === 'chau' || textoLimpio === 'ayuda') {
+    // Buscamos directamente en el JSON si existe la combinación exacta
+    // Recorremos las llaves buscando coincidencia exacta en minúsculas
+    const keyEncontrada = Object.keys(data).find(k => k.toLowerCase().trim() === textoLimpio);
+    if (keyEncontrada) {
       return {
-        respuesta: data[bestMatch] || 'No tengo una respuesta para eso.',
+        respuesta: data[keyEncontrada],
         estado: "ÉXITO"
       };
     }
+  }
+
+  const keys = Object.keys(data);
+  let bestMatch = '';
+  let bestScore = Infinity;
+
+  keys.forEach(key => {
+    const score = levenshteinDistance(textoLimpio, key.toLowerCase().trim());
+    if (score < bestScore) {
+      bestScore = score;
+      bestMatch = key;
+    }
+  });
+
+  // Mantenemos el umbral de 7 para frases largas, pero si la palabra clave es muy corta, 
+  // exigimos que el puntaje sea menor para evitar falsos positivos.
+  if (bestScore > 7) {
+    return {
+      respuesta: "No estoy segura de entender tu consulta. Recordá que puedo darte información sobre <strong>Campus Virtual, SIU Guaraní, Horarios o Mails de contacto</strong>. ¿Podrías reformular tu pregunta especificando tu duda?",
+      estado: "FALLO"
+    };
+  }
+
+  return {
+    respuesta: data[bestMatch] || 'No tengo una respuesta para eso.',
+    estado: "ÉXITO"
+  };
+}
 
     // 6. NUEVA LÓGICA: Renderiza la respuesta e incluye los botones de Feedback 👍/👎
     function displayBotMessageWithFeedback(id, message) {
