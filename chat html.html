@@ -150,10 +150,20 @@
   <div class="chat-popup" id="chatPopup">
     <div class="chat-header">Eli - Tu Asistente Virtual</div>
     <div class="chat-container" id="chatContainer">
-      </div>
-    <div class="input-container">
-      <input type="text" id="userInput" placeholder="Escribe tu pregunta...">
+      <!-- Las burbujas de chat se cargan acá dentro -->
+    </div>
+    
+    <!-- REEMPLAZO DE LA BARRA DE ENTRADA CON EL BOTÓN MENÚ INTEGRADO -->
+    <div class="input-container" style="display: flex; gap: 8px; align-items: center; padding: 10px;">
+      
+      <button onclick="mostrarMenuOpciones()" style="background-color: #64748b; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 0.9rem;" title="Ver opciones principales">
+        ☰ Menú
+      </button>
+      
+      <input type="text" id="userInput" placeholder="Escribe tu pregunta..." style="flex-grow: 1;">
+      
       <button class="send-btn" onclick="sendMessage()">Enviar</button>
+      
     </div>
   </div>
 
@@ -207,9 +217,83 @@
       document.getElementById('userInput').focus();
     }
 
+    // REEMPLAZÁ TU FUNCIÓN REMOVEQUICKACTIONS Y LAS DE ENVÍO POR ESTAS CUATRO:
+
     function removeQuickActions() {
       const actionsSection = document.getElementById('quickActionsSection');
       if (actionsSection) actionsSection.remove();
+    }
+
+    // Esta función se ejecuta al tocar el botón físico "☰ Menú" que pusimos en el paso anterior
+    function mostrarMenuOpciones() {
+      removeQuickActions();
+
+      const defaultMessages = [
+        { text: 'Ayuda ❓', action: () => sendPredefinedMessage('Ayuda') },
+        { text: 'Contactos 📞', action: () => sendPredefinedMessage('Información') },
+        { text: '¿Qué puedo preguntar? 💡', action: () => sendPredefinedMessage('No se que preguntar') }
+      ];
+
+      const chatContainer = document.getElementById('chatContainer');
+      
+      const quickActionsDiv = document.createElement('div');
+      quickActionsDiv.id = 'quickActionsSection';
+      quickActionsDiv.classList.add('quick-actions-container');
+      quickActionsDiv.style.marginTop = '8px';
+      quickActionsDiv.style.marginBottom = '8px';
+
+      defaultMessages.forEach(msg => {
+        const button = document.createElement('button');
+        button.textContent = msg.text;
+        button.onclick = msg.action;
+        button.classList.add('default-button');
+        quickActionsDiv.appendChild(button);
+      });
+
+      chatContainer.appendChild(quickActionsDiv);
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+
+    function sendPredefinedMessage(message) {
+      removeQuickActions(); 
+      displayMessage(message, 'user');
+      
+      const idMensaje = Date.now().toString(); 
+      enviarPreguntaGoogle(idMensaje, message, "ÉXITO");
+
+      const botMessage = findAnswer(message);
+      displayBotMessageWithFeedback(idMensaje, botMessage);
+    }
+
+    function sendMessage() {
+      const input = document.getElementById('userInput');
+      let userMessage = input.value.trim();
+      if (userMessage) {
+        removeQuickActions(); 
+        displayMessage(userMessage, 'user');
+        
+        const idMensaje = Date.now().toString();
+        
+        let mensajeParaEvaluar = userMessage;
+        if (ultimaPreguntaFallida !== "" && userMessage.length < 20) {
+            mensajeParaEvaluar = ultimaPreguntaFallida + " " + userMessage;
+        }
+        
+        const resultado = evaluarYBuscarRespuesta(mensajeParaEvaluar);
+        
+        if (resultado.estado === "ÉXITO") {
+            ultimaPreguntaFailed = ""; 
+            ultimaPreguntaFallida = ""; 
+        } else {
+            ultimaPreguntaFallida = mensajeParaEvaluar; 
+        }
+        
+        enviarPreguntaGoogle(idMensaje, userMessage, resultado.estado);
+        displayBotMessageWithFeedback(idMensaje, resultado.respuesta);
+        
+        input.value = '';
+        input.focus();
+      }
     }
 
     // 3. NUEVA LÓGICA: Envío de mensajes predefinidos con auditoría completa
