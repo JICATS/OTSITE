@@ -169,8 +169,9 @@
 
   <script>
     let data = {};
+    let ultimaPreguntaFallida = ""; // Memoria de corto plazo para fusionar contexto
 
-    // 1. Carga inicial de datos desde Google Sheets (Sigue igual)
+    // 1. Carga inicial de datos desde Google Sheets
     async function fetchData() {
       try {
         const response = await fetch('https://script.google.com/macros/s/AKfycbysU4e9dNsFd5gIx3nM9GCrqMUfLv56hwX9gU0cezltzvPNiupVXF3b5sjUu5G_NYE/exec');
@@ -185,12 +186,12 @@
       }
     }
 
-    // 2. Muestra los botones de acceso rápido iniciales (Sigue igual)
+    // 2. Muestra los botones de acceso rápido iniciales
     function displayDefaultMessages() {
       const defaultMessages = [
-        { text: 'Ayuda', action: () => sendPredefinedMessage('Ayuda') },
-        { text: 'Contactos', action: () => sendPredefinedMessage('Información') },
-        { text: 'No se que preguntar', action: () => sendPredefinedMessage('No se que preguntar') }
+        { text: 'Ayuda ❓', action: () => sendPredefinedMessage('Ayuda') },
+        { text: 'Contactos 📞', action: () => sendPredefinedMessage('Información') },
+        { text: '¿Qué puedo preguntar? 💡', action: () => sendPredefinedMessage('No se que preguntar') }
       ];
 
       const chatContainer = document.getElementById('chatContainer');
@@ -199,11 +200,6 @@
       const quickActionsDiv = document.createElement('div');
       quickActionsDiv.id = 'quickActionsSection';
       quickActionsDiv.classList.add('quick-actions-container');
-
-      const infoText = document.createElement('div');
-      infoText.classList.add('info-badge');
-      infoText.innerHTML = '⚡ Utiliza los accesos rápidos o escribe tu consulta:';
-      quickActionsDiv.appendChild(infoText);
 
       defaultMessages.forEach(msg => {
         const button = document.createElement('button');
@@ -217,14 +213,12 @@
       document.getElementById('userInput').focus();
     }
 
-    // REEMPLAZÁ TU FUNCIÓN REMOVEQUICKACTIONS Y LAS DE ENVÍO POR ESTAS CUATRO:
-
     function removeQuickActions() {
       const actionsSection = document.getElementById('quickActionsSection');
       if (actionsSection) actionsSection.remove();
     }
 
-    // Esta función se ejecuta al tocar el botón físico "☰ Menú" que pusimos en el paso anterior
+    // 3. Inyecta el menú de opciones cuando se presiona el botón físico "☰ Menú"
     function mostrarMenuOpciones() {
       removeQuickActions();
 
@@ -254,6 +248,7 @@
       chatContainer.scrollTop = chatContainer.scrollHeight;
     }
 
+    // 4. Envío de mensajes predefinidos (botones)
     function sendPredefinedMessage(message) {
       removeQuickActions(); 
       displayMessage(message, 'user');
@@ -261,10 +256,11 @@
       const idMensaje = Date.now().toString(); 
       enviarPreguntaGoogle(idMensaje, message, "ÉXITO");
 
-      const botMessage = findAnswer(message);
-      displayBotMessageWithFeedback(idMensaje, botMessage);
+      const resultado = evaluarYBuscarRespuesta(message);
+      displayBotMessageWithFeedback(idMensaje, resultado.respuesta);
     }
 
+    // 5. Envío de mensajes manuales por teclado o botón Enviar
     function sendMessage() {
       const input = document.getElementById('userInput');
       let userMessage = input.value.trim();
@@ -282,7 +278,6 @@
         const resultado = evaluarYBuscarRespuesta(mensajeParaEvaluar);
         
         if (resultado.estado === "ÉXITO") {
-            ultimaPreguntaFailed = ""; 
             ultimaPreguntaFallida = ""; 
         } else {
             ultimaPreguntaFallida = mensajeParaEvaluar; 
@@ -296,104 +291,68 @@
       }
     }
 
-    // 3. NUEVA LÓGICA: Envío de mensajes predefinidos con auditoría completa
-    function sendPredefinedMessage(message) {
-      removeQuickActions(); 
-      displayMessage(message, 'user');
-      
-      const idMensaje = Date.now().toString(); 
-      enviarPreguntaGoogle(idMensaje, message, "ÉXITO");
-
-      const botMessage = findAnswer(message);
-      displayBotMessageWithFeedback(idMensaje, botMessage);
-    }
-
-    // NUEVA VARIABLE GLOBAL: Actúa como la memoria de corto plazo del bot
-    let ultimaPreguntaFallida = "";
-
-    function sendMessage() {
-      const input = document.getElementById('userInput');
-      let userMessage = input.value.trim();
-      if (userMessage) {
-        removeQuickActions(); 
-        displayMessage(userMessage, 'user');
-        
-        const idMensaje = Date.now().toString();
-        
-        // Si el bot falló en la pregunta anterior y el usuario escribe una frase corta (menos de 20 letras), 
-        // asumimos que está aclarando la duda anterior y fusionamos ambas cadenas de texto.
-        let mensajeParaEvaluar = userMessage;
-        if (ultimaPreguntaFallida !== "" && userMessage.length < 20) {
-            mensajeParaEvaluar = ultimaPreguntaFallida + " " + userMessage;
-        }
-        
-        // Evaluamos usando el texto combinado si corresponde
-        const resultado = evaluarYBuscarRespuesta(mensajeParaEvaluar);
-        
-        // Si la respuesta fue un ÉXITO, limpiamos la memoria de fallos. 
-        // Si volvió a fallar, actualizamos la memoria con el nuevo intento combinado.
-        if (resultado.estado === "ÉXITO") {
-            ultimaPreguntaFallida = ""; 
-        } else {
-            ultimaPreguntaFallida = mensajeParaEvaluar; 
-        }
-        
-        // Registramos en Google lo que el usuario tipeó originalmente para no falsear el historial
-        enviarPreguntaGoogle(idMensaje, userMessage, resultado.estado);
-        displayBotMessageWithFeedback(idMensaje, resultado.respuesta);
-        
-        input.value = '';
-        input.focus();
-      }
-    }
-
+    // 6. Evalúa la calidad antes de responder usando filtros de inclusión y Levenshtein
     function evaluarYBuscarRespuesta(textoAEvaluar) {
-  if (!data) return { respuesta: 'No data available', estado: "FALLO" };
-  
-  // Limpiamos el texto para la comparación rápida
-  const textoLimpio = textoAEvaluar.toLowerCase().trim();
+      if (!data) return { respuesta: 'No data available', estado: "FALLO" };
+      
+      const textoLimpio = textoAEvaluar.toLowerCase().trim();
+      const keys = Object.keys(data);
 
-  // Atajo directo para palabras clave críticas y cortas (Evita que Levenshtein las rebote)
-  if (textoLimpio === 'hola' || textoLimpio === 'chau' || textoLimpio === 'ayuda') {
-    // Buscamos directamente en el JSON si existe la combinación exacta
-    // Recorremos las llaves buscando coincidencia exacta en minúsculas
-    const keyEncontrada = Object.keys(data).find(k => k.toLowerCase().trim() === textoLimpio);
-    if (keyEncontrada) {
+      // Paso A: Filtro de inclusión directa para frases largas del listado de clientes
+      let coincidenciaPorInclusion = "";
+      for (let key of keys) {
+        const keyLimpia = key.toLowerCase().trim();
+        if (keyLimpia.length > 3 && textoLimpio.includes(keyLimpia)) {
+          coincidenciaPorInclusion = key;
+          break; 
+        }
+      }
+
+      if (coincidenciaPorInclusion !== "") {
+        return {
+          respuesta: data[coincidenciaPorInclusion],
+          estado: "ÉXITO"
+        };
+      }
+
+      // Paso B: Atajo directo para palabras clave críticas muy cortas
+      if (textoLimpio === 'hola' || textoLimpio === 'chau' || textoLimpio === 'ayuda') {
+        const keyExacta = keys.find(k => k.toLowerCase().trim() === textoLimpio);
+        if (keyExacta) {
+          return {
+            respuesta: data[keyExacta],
+            estado: "ÉXITO"
+          };
+        }
+      }
+
+      // Paso C: Algoritmo Levenshtein para errores de tipeo (ej: "necescito")
+      let bestMatch = '';
+      let bestScore = Infinity;
+
+      keys.forEach(key => {
+        const score = levenshteinDistance(textoLimpio, key.toLowerCase().trim());
+        if (score < bestScore) {
+          bestScore = score;
+          bestMatch = key;
+        }
+      });
+
+      if (bestScore <= 7) {
+        return {
+          respuesta: data[bestMatch] || 'No tengo una respuesta para eso.',
+          estado: "ÉXITO"
+        };
+      }
+
+      // Paso D: Respuesta por defecto ante fallos absolutos
       return {
-        respuesta: data[keyEncontrada],
-        estado: "ÉXITO"
+        respuesta: "No estoy segura de entender tu consulta. Recordá que puedo darte información sobre <strong>Campus Virtual, SIU Guaraní, Horarios o Mails de contacto</strong>. ¿Podrías reformular tu pregunta especificando tu duda?",
+        estado: "FALLO"
       };
     }
-  }
 
-  const keys = Object.keys(data);
-  let bestMatch = '';
-  let bestScore = Infinity;
-
-  keys.forEach(key => {
-    const score = levenshteinDistance(textoLimpio, key.toLowerCase().trim());
-    if (score < bestScore) {
-      bestScore = score;
-      bestMatch = key;
-    }
-  });
-
-  // Mantenemos el umbral de 7 para frases largas, pero si la palabra clave es muy corta, 
-  // exigimos que el puntaje sea menor para evitar falsos positivos.
-  if (bestScore > 7) {
-    return {
-      respuesta: "No estoy segura de entender tu consulta. Recordá que puedo darte información sobre <strong>Campus Virtual, SIU Guaraní, Horarios o Mails de contacto</strong>. ¿Podrías reformular tu pregunta especificando tu duda?",
-      estado: "FALLO"
-    };
-  }
-
-  return {
-    respuesta: data[bestMatch] || 'No tengo una respuesta para eso.',
-    estado: "ÉXITO"
-  };
-}
-
-    // 6. NUEVA LÓGICA: Renderiza la respuesta e incluye los botones de Feedback 👍/👎
+    // 7. Renderiza la respuesta e incluye los botones de Feedback 👍/👎
     function displayBotMessageWithFeedback(id, message) {
       const chatContainer = document.getElementById('chatContainer');
       const blockElement = document.createElement('div');
@@ -424,13 +383,13 @@
       chatContainer.scrollTop = chatContainer.scrollHeight;
     }
 
-    // 7. NUEVA LÓGICA: Envío de datos por Beacon al Apps Script (Pregunta)
+    // 8. Envío de datos por Beacon al Apps Script (Pregunta)
     function enviarPreguntaGoogle(id, msg, est) {
       const url = 'https://script.google.com/macros/s/AKfycbysU4e9dNsFd5gIx3nM9GCrqMUfLv56hwX9gU0cezltzvPNiupVXF3b5sjUu5G_NYE/exec';
       navigator.sendBeacon(`${url}?action=registrar_pregunta&id=${id}&q=${encodeURIComponent(msg)}&status=${encodeURIComponent(est)}`);
     }
 
-    // 8. NUEVA LÓGICA: Envío de datos por Beacon al Apps Script (Votación 👍/👎)
+    // 9. Envío de datos por Beacon al Apps Script (Votación 👍/👎)
     function enviarCalificacion(id, voto) {
       const feedbackDiv = document.getElementById('feed-' + id);
       if (feedbackDiv) {
@@ -440,7 +399,7 @@
       navigator.sendBeacon(`${url}?action=registrar_calificacion&id=${id}&voto=${encodeURIComponent(voto)}`);
     }
 
-    // 9. Algoritmo Matemático de Distancia (Sigue igual)
+    // 10. Algoritmo Matemático de Distancia Levenshtein
     function levenshteinDistance(a, b) {
       const matrix = [];
       for (let i = 0; i <= b.length; i++) matrix[i] = [i];
@@ -460,7 +419,7 @@
       return matrix[b.length][a.length];
     }
 
-    // 10. Renderizador de burbujas simples (Sigue igual, usada para mensajes del usuario)
+    // 11. Renderizador de burbujas simples (para mensajes del usuario)
     function displayMessage(message, sender) {
       const chatContainer = document.getElementById('chatContainer');
       const messageElement = document.createElement('div');
@@ -470,14 +429,14 @@
       chatContainer.scrollTop = chatContainer.scrollHeight;
     }
 
-    // 11. Escuchador de teclado Enter (Sigue igual)
+    // 12. Escuchador de teclado Enter
     document.getElementById('userInput').addEventListener('keypress', function (e) {
       if (e.key === 'Enter') {
         sendMessage();
       }
     });
 
-    // Ejecución inicial
+    // Ejecución inicial automatizada al cargar la página
     fetchData();
   </script>
 </body>
