@@ -98,7 +98,6 @@
             margin-top: 10px;
         }
 
-        /* Contenedor del Chatbot modificado para usar iframe */
         .chatbot-container {
             background: var(--bg-card);
             border-radius: 12px;
@@ -108,11 +107,38 @@
             overflow: hidden;
         }
 
-        /* El iframe ocupa el 100% del contenedor asignado */
         .chatbot-iframe {
             width: 100%;
             height: 100%;
             border: none;
+        }
+
+        /* NUEVO: Estilos para el banner de rescate debajo del chat */
+        .alert-banner {
+            background-color: #fef2f2;
+            border: 1px solid #f87171;
+            border-radius: 12px;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        }
+
+        .alert-banner p {
+            color: #991b1b;
+            font-size: 0.95rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .btn-alert {
+            display: inline-block;
+            background-color: #ef4444;
+            color: white;
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.9rem;
         }
 
         footer {
@@ -124,7 +150,6 @@
             margin-top: 50px;
         }
 
-        /* NUEVO: Estilos dedicados a la animación del carrusel de texto */
         @keyframes rotarPreguntas {
             0%, 13% { top: 0px; }
             16%, 29% { top: -20px; }
@@ -167,42 +192,47 @@
             </div>
 
             <div class="info-block">
-                <h3>Planificación de Consultas</h3>
-                <p>En este sitio podrás sacar un turno en caso de que necesites planificar una consulta presencial con el equipo técnico de forma organizada.</p>
-                <a href="https://docs.google.com/forms/d/e/1FAIpQLScqDr9J-XpBqx6rVUMtKLGU_lWLI4HJl_u9cHFxpCXntiLwpg/viewform?usp=header" target="blank" class="btn-turno">Solicitar Turno Aquí</a>
+                <h3>Asistencia Virtual Automática</h3>
+                <p>Para agilizar tus dudas cotidianas sin necesidad de esperar, disponemos de un asistente virtual. <strong>Utilizá el chat de la derecha</strong> para consultar al instante sobre los servicios de la facultad y resolver tu problema de inmediato.</p>
             </div>
 
             <div class="info-block">
-                <h3>Asistencia Virtual Automática</h3>
-                <p>Para agilizar tus dudas cotidianas sin necesidad de esperar, disponemos de un asistente virtual. Utilizá el chat de la derecha para consultar al instante sobre los servicios de la facultad.</p>
+                <h3>Planificación de Consultas Presenciales</h3>
+                <p>Si el asistente virtual no pudo solucionar tu inconveniente y requieres que un técnico revise tu caso en persona, podés agendar una visita a nuestra oficina.</p>
+                <a href="https://docs.google.com/forms/d/e/1FAIpQLScqDr9J-XpBqx6rVUMtKLGU_lWLI4HJl_u9cHFxpCXntiLwpg/viewform?usp=header" target="blank" class="btn-turno">Solicitar Turno Aquí</a>
             </div>
         </main>
 
         <aside style="display: flex; flex-direction: column; gap: 15px;">
             
             <div style="width: 100%; padding: 12px; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 12px; text-align: center; display: flex; justify-content: center; align-items: center; gap: 5px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
-    <span style="font-size: 0.85rem; color: #64748b; font-weight: 500; flex-shrink: 0;">Pregúntale a Eli:</span>
-    
-    <div style="height: 20px; overflow: hidden; position: relative; flex-grow: 1; max-width: 260px; text-align: left;">
-        <div class="carrusel-texto" style="position: absolute; width: 100%; animation: rotarPreguntas 15s infinite ease-in-out;">
-            <span style="display: block; height: 20px; font-size: 0.85rem; color: #2563eb; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">¿Cómo recupero mi clave del SIU?</span>
-            <span style="display: block; height: 20px; font-size: 0.85rem; color: #16a34a; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">¿Dónde saco la constancia de alumno?</span>
-            <span style="display: block; height: 20px; font-size: 0.85rem; color: #ea580c; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">¿Cómo ingreso al Campus Virtual?</span>
-            <span style="display: block; height: 20px; font-size: 0.85rem; color: #dc2626; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Tengo un problema técnico, ¿qué hago?</span>
-            <span style="display: block; height: 20px; font-size: 0.85rem; color: #7c3aed; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">¿No te aparece una nota en el sistema?</span>
-            <span style="display: block; height: 20px; font-size: 0.85rem; color: #2563eb; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">¿Cuáles son los horarios y contactos?</span>
-            <span style="display: block; height: 20px; font-size: 0.85rem; color: #2563eb; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">¿Cuáles lineas de colectivos tomar?</span>
-            <span style="display: block; height: 20px; font-size: 0.85rem; color: #2563eb; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">¿Cómo me Reinscribo?</span>
-            <span style="display: block; height: 20px; font-size: 0.85rem; color: #2563eb; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">¿Cómo inscribirse a la facultad?</span>
-            <span style="display: block; height: 20px; font-size: 0.85rem; color: #2563eb; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">¿Comó se hace la Preinscripción?</span>
-            <span style="display: block; height: 20px; font-size: 0.85rem; color: #2563eb; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">¿Cómo me inscribo a posgrado?</span>
-            <span style="display: block; height: 20px; font-size: 0.85rem; color: #2563eb; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">¿Cómo me inscribo a materias?</span>
-        </div>
-    </div>
-</div>
+                <span style="font-size: 0.85rem; color: #64748b; font-weight: 500; flex-shrink: 0;">Pregúntale a Eli:</span>
+                
+                <div style="height: 20px; overflow: hidden; position: relative; flex-grow: 1; max-width: 260px; text-align: left;">
+                    <div class="carrusel-texto" style="position: absolute; width: 100%; animation: rotarPreguntas 15s infinite ease-in-out;">
+                        <span style="display: block; height: 20px; font-size: 0.85rem; color: #2563eb; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">¿Cómo recupero mi clave del SIU?</span>
+                        <span style="display: block; height: 20px; font-size: 0.85rem; color: #16a34a; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">¿Dónde saco la constancia de alumno?</span>
+                        <span style="display: block; height: 20px; font-size: 0.85rem; color: #ea580c; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">¿Cómo ingreso al Campus Virtual?</span>
+                        <span style="display: block; height: 20px; font-size: 0.85rem; color: #dc2626; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Tengo un problema técnico, ¿qué hago?</span>
+                        <span style="display: block; height: 20px; font-size: 0.85rem; color: #7c3aed; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">¿No te aparece una nota en el sistema?</span>
+                        <span style="display: block; height: 20px; font-size: 0.85rem; color: #2563eb; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">¿Cuáles son los horarios y contactos?</span>
+                        <span style="display: block; height: 20px; font-size: 0.85rem; color: #2563eb; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">¿Cuáles lineas de colectivos tomar?</span>
+                        <span style="display: block; height: 20px; font-size: 0.85rem; color: #2563eb; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">¿Cómo me Reinscribo?</span>
+                        <span style="display: block; height: 20px; font-size: 0.85rem; color: #2563eb; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">¿Cómo inscribirse a la facultad?</span>
+                        <span style="display: block; height: 20px; font-size: 0.85rem; color: #2563eb; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">¿Comó se hace la Preinscripción?</span>
+                        <span style="display: block; height: 20px; font-size: 0.85rem; color: #2563eb; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">¿Cómo me inscribo a posgrado?</span>
+                        <span style="display: block; height: 20px; font-size: 0.85rem; color: #2563eb; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">¿Cómo me inscribo a materias?</span>
+                    </div>
+                </div>
+            </div>
 
             <div class="chatbot-container">
                 <iframe src="chat html.html" class="chatbot-iframe" title="Chatbot Asistente"></iframe>
+            </div>
+
+            <div class="alert-banner">
+                <p>¿El asistente no logró ayudarte?</p>
+                <a href="https://docs.google.com/forms/d/e/1FAIpQLScqDr9J-XpBqx6rVUMtKLGU_lWLI4HJl_u9cHFxpCXntiLwpg/viewform?usp=header" target="blank" class="btn-alert">Sacar Turno Presencial</a>
             </div>
 
         </aside>
